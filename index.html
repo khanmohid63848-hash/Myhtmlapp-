@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SMAS Level Quiz</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:black;
+  color:white;
+}
+.surface{
+  height:100vh;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  position:relative;
+}
+button{
+  padding:12px 30px;
+  margin:10px;
+  font-size:18px;
+  font-weight:bold;
+  background:transparent;
+  border:3px solid #00ffff;
+  color:#00ffff;
+  border-radius:6px;
+  cursor:pointer;
+}
+button:hover{background:#00ffff;color:black}
+button:disabled{opacity:0.5}
+
+input.answerInput{
+  padding:12px;
+  width:260px;
+  font-size:18px;
+  text-align:center;
+  border:2px solid #00ffff;
+  background:black;
+  color:#00ffff;
+  border-radius:6px;
+}
+
+.right{color:#00ff00;font-weight:bold}
+.wrong{color:red;font-weight:bold}
+
+/* ===== MENU BAR ===== */
+.topBar{
+  position:absolute;
+  top:0;left:0;
+  width:100%;
+  height:55px;
+  background: #90ee90; /* ✅ MENU BAR BACKGROUND LIGHT GREEN */
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:0 10px;
+}
+
+.settingsBtn{
+  background:#00ffff;
+  border:none;
+  border-radius:50%;
+  padding:6px 10px;
+}
+.coinBox{color:gold;font-weight:bold}
+
+#settingsMenu{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.9);
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+}
+.switch{
+  width:50px;height:25px;background:#555;
+  border-radius:20px;cursor:pointer;position:relative;
+}
+.switch::before{
+  content:"";width:21px;height:21px;
+  background:white;position:absolute;top:2px;left:2px;
+  border-radius:50%;transition:.3s;
+}
+.switch.on{background:#00ff00}
+.switch.on::before{left:27px}
+</style>
+</head>
+
+<body>
+
+<audio id="bgMusic" src="shafa.mp3" loop></audio>
+
+<!-- LOGIN -->
+<div id="loginSurface" class="surface" style="display:flex;">
+  <h1>LOGIN</h1>
+  <input id="username" placeholder="Full Name">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="login()">LOGIN</button>
+  <div id="loginError"></div>
+</div>
+
+<!-- LEVEL MENU -->
+<div id="surface2" class="surface">
+  <div class="topBar">
+    <button class="settingsBtn" onclick="openSettings()">⚙️</button>
+    <div class="coinBox">🪙 <span id="coinCount">0</span></div>
+  </div>
+  <h2 style="margin-top:80px;">SELECT LEVEL</h2>
+  <div id="levelButtons"></div>
+</div>
+
+<!-- CHALLENGE -->
+<div id="challenge" class="surface">
+  <div class="topBar">
+    <button class="settingsBtn" onclick="openSettings()">⚙️</button>
+    <div class="coinBox">🪙 <span id="coinCount2">0</span></div>
+  </div>
+
+  <h2 id="levelTitle"></h2>
+  <h3 id="questionText"></h3>
+
+  <input id="answerInput" class="answerInput" placeholder="Type your answer">
+  <button onclick="checkAnswer()">SUBMIT</button>
+
+  <div id="result"></div>
+  <button id="nextBtn" disabled onclick="nextLevel()">NEXT</button>
+</div>
+
+<!-- SETTINGS -->
+<div id="settingsMenu" class="surface">
+  <h2>SETTINGS</h2>
+  <p>Music</p>
+  <div id="musicSwitch" class="switch on" onclick="toggleMusic()"></div>
+  <button onclick="openSurface('surface2');closeSettings()">QUIT</button>
+  <button onclick="closeSettings()">CLOSE</button>
+</div>
+
+<script>
+let coins=0,currentLevel=1,unlockedLevel=1;
+
+const levels={
+1:{q:"Who is the most funny student in our class?",a:"hasil"},
+2:{q:"Who is the most silent student in our class?",a:"shama"},
+3:{q:"Who teaches us biology in school?",a:"kareem sir"},
+4:{q:"Who is the most dangerous teacher in our class?",a:"alisha mam"},
+5:{q:"Which student talks the most in our class?",a:"anuj"},
+6:{q:"Who is the class topper?",a:"khatiza"},
+7:{q:"Who is known by the name pen chor?",a:"mohid"},
+8:{q:"Which student has short height?",a:"anuj"},
+9:{q:"Who is the most beaten student this year?",a:"hasil"},
+10:{q:"Who is known by the name joker?",a:"hasil"},
+11:{q:"Who is the most absent student in class 12th?",a:"ankit"},
+12:{q:"Who first called hasil joker?",a:"aliya teacher"}
+};
+
+function openSurface(id){
+  document.querySelectorAll(".surface").forEach(s=>s.style.display="none");
+  document.getElementById(id).style.display="flex";
+}
+
+function login(){
+  if(username.value==="Mohid Khan" && password.value==="1234"){
+    bgMusic.play();
+    openSurface("surface2");
+    updateLevels();
+  }else loginError.innerText="Wrong Login";
+}
+
+function updateLevels(){
+  levelButtons.innerHTML="";
+  for(let i=1;i<=12;i++){
+    let b=document.createElement("button");
+    b.innerText=i<=unlockedLevel?`Level ${i}`:`Level ${i} 🔒`;
+    if(i<=unlockedLevel) b.onclick=()=>startLevel(i);
+    levelButtons.appendChild(b);
+  }
+}
+
+function startLevel(l){
+  if(l>unlockedLevel){
+    if(coins>=10 && confirm("10 coins use karke unlock kare?")){
+      coins-=10;unlockedLevel=l;updateLevels();
+    }
+    coinCount.innerText=coinCount2.innerText=coins;
+    return;
+  }
+  currentLevel=l;
+  levelTitle.innerText="LEVEL "+l;
+  questionText.innerText=levels[l].q;
+  answerInput.value="";
+  result.innerHTML="";
+  nextBtn.disabled=true;
+  openSurface("challenge");
+}
+
+function checkAnswer(){
+  let userAns=answerInput.value.trim().toLowerCase();
+  let correct=levels[currentLevel].a;
+  if(userAns===correct){
+    result.innerHTML="<div class='right'>✅ RIGHT</div>";
+    nextBtn.disabled=false;
+  }else{
+    result.innerHTML="<div class='wrong'>❌ WRONG</div>";
+  }
+}
+
+function nextLevel(){
+  coins++;
+  coinCount.innerText=coinCount2.innerText=coins;
+  if(currentLevel===unlockedLevel) unlockedLevel++;
+  updateLevels();
+  openSurface("surface2");
+}
+
+function openSettings(){settingsMenu.style.display="flex";}
+function closeSettings(){settingsMenu.style.display="none";}
+function toggleMusic(){
+  let sw=document.getElementById("musicSwitch");
+  if(bgMusic.paused){bgMusic.play();sw.classList.add("on");}
+  else{bgMusic.pause();sw.classList.remove("on");}
+}
+</script>
+
+</body>
+</html>
